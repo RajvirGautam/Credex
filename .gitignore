@@ -1,0 +1,20 @@
+node_modules
+.next
+.vercel
+out
+dist
+.env
+.env.local
+.DS_Store
+*.log
+.data
+coverage
+
+# TypeScript incremental build cache
+tsconfig.tsbuildinfo
+
+# AI assistant / IDE config (not a submission deliverable)
+.claude/
+
+# Internal planning doc (not a required repo deliverable)
+plan.md
