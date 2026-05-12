@@ -14,10 +14,14 @@ export default function ShareBar({ url }: { url: string }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-xs text-ink-500">
-      <span>Share this audit (PII stripped):</span>
-      <code className="rounded bg-ink-100 px-2 py-1 font-mono text-ink-700">{url}</code>
-      <button onClick={copy} className="btn-ghost text-xs">{copied ? "Copied" : "Copy"}</button>
+    <div className="flex w-full flex-wrap items-center gap-2 text-xs text-ink-500">
+      <span className="shrink-0 whitespace-nowrap">Share this audit (PII stripped):</span>
+      <code className="min-w-0 flex-1 truncate rounded bg-ink-100 px-2 py-1 font-mono text-ink-700" title={url}>
+        {url}
+      </code>
+      <button onClick={copy} className="btn-ghost shrink-0 whitespace-nowrap text-xs">
+        {copied ? "Copied" : "Copy"}
+      </button>
     </div>
   );
 }
