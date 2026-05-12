@@ -20,14 +20,14 @@ export async function sendEmail({ to, subject, html }: SendArgs): Promise<{ ok: 
     // sendMultiple sends individually to avoid leaking emails if you have multiple isolated users,
     // but if it's a team, standard send is better. We'll use standard send so they can "Reply All".
     await sgMail.send({
-      from: "RightSize <audit@rightsize.app>",
+      from: process.env.SENDGRID_FROM_EMAIL || "RightSize <audit@rightsize.app>",
       to: toArray,
       subject,
       html,
     });
     return { ok: true, provider: "sendgrid" };
-  } catch (err) {
-    console.warn("[email] sendgrid threw", err);
+  } catch (err: any) {
+    console.error("[email] sendgrid threw", err.response?.body || err);
     return { ok: true, provider: "console" };
   }
 }
