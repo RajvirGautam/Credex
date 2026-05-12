@@ -5,7 +5,7 @@ import { checkRateLimit, ipFromHeaders } from "@/lib/rate-limit";
 
 interface InboundBody {
   slug: string;
-  email: string;
+  email: string | string[];
   company?: string;
   role?: string;
   teamSize?: number;
@@ -27,9 +27,22 @@ export async function POST(req: Request) {
   }
 
   if (body.honeypot) return NextResponse.json({ ok: true }); // silently drop bots
-  if (!body.email || !EMAIL_RE.test(body.email)) {
+  
+  if (!body.email) {
+    return NextResponse.json({ error: "Missing email" }, { status: 400 });
+  }
+
+  // Handle multiple comma-separated emails or array of emails
+  const emailArray = Array.isArray(body.email) 
+    ? body.email 
+    : body.email.split(',').map(e => e.trim());
+    
+  const validEmails = emailArray.filter(e => EMAIL_RE.test(e));
+
+  if (validEmails.length === 0) {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
+
   if (!body.slug) return NextResponse.json({ error: "Missing slug" }, { status: 400 });
 
   const audit = await getAuditBySlug(body.slug);
@@ -37,7 +50,7 @@ export async function POST(req: Request) {
 
   const lead = await createLead({
     auditId: audit.id,
-    email: body.email,
+    email: validEmails.join(', '), // Store as comma-separated string in DB
     company: body.company,
     role: body.role,
     teamSize: body.teamSize,
@@ -50,7 +63,7 @@ export async function POST(req: Request) {
     : `Your AI spend audit — you're spending well`;
 
   await sendEmail({
-    to: body.email,
+    to: validEmails,
     subject,
     html: leadConfirmationHtml({
       shareUrl,

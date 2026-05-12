@@ -53,8 +53,9 @@ export default function ResultsCta({ result, slug, defaultEmail }: Props) {
           <form onSubmit={submit} className="mt-4 flex flex-wrap gap-2">
             <input
               type="email"
+              multiple
               required
-              placeholder="you@startup.com"
+              placeholder="you@startup.com, cto@startup.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input flex-1 min-w-[220px]"
@@ -85,8 +86,9 @@ export default function ResultsCta({ result, slug, defaultEmail }: Props) {
           <form onSubmit={submit} className="mt-4 grid gap-2 md:grid-cols-2">
             <input
               type="email"
+              multiple
               required
-              placeholder="you@startup.com"
+              placeholder="you@startup.com, cto@startup.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input"
@@ -121,8 +123,9 @@ export default function ResultsCta({ result, slug, defaultEmail }: Props) {
         <form onSubmit={submit} className="mt-4 flex flex-wrap gap-2">
           <input
             type="email"
+            multiple
             required
-            placeholder="you@startup.com"
+            placeholder="you@startup.com, cto@startup.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="input flex-1 min-w-[220px]"
