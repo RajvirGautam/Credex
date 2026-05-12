@@ -26,7 +26,13 @@ export default function ResultsCta({ result, slug, defaultEmail }: Props) {
       const resp = await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, email, company }),
+        body: JSON.stringify({ 
+          slug, 
+          email, 
+          company,
+          monthlySavings: result.totalMonthlySavings,
+          annualSavings: result.totalAnnualSavings
+        }),
       });
       if (!resp.ok) {
         const t = await resp.text();

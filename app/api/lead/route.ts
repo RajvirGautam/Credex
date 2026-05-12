@@ -10,6 +10,8 @@ interface InboundBody {
   role?: string;
   teamSize?: number;
   honeypot?: string;
+  monthlySavings?: number;
+  annualSavings?: number;
 }
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -46,10 +48,15 @@ export async function POST(req: Request) {
   if (!body.slug) return NextResponse.json({ error: "Missing slug" }, { status: 400 });
 
   const audit = await getAuditBySlug(body.slug);
-  if (!audit) return NextResponse.json({ error: "Audit not found" }, { status: 404 });
+  
+  // Vercel /tmp workaround: If we hit a different serverless container, the audit won't be in /tmp.
+  // We use the values passed from the client as a fallback so the email still sends!
+  const monthlySavings = audit?.results.totalMonthlySavings ?? body.monthlySavings ?? 0;
+  const annualSavings = audit?.results.totalAnnualSavings ?? body.annualSavings ?? 0;
+  const auditId = audit?.id ?? `fallback-${body.slug}`;
 
   const lead = await createLead({
-    auditId: audit.id,
+    auditId: auditId,
     email: validEmails.join(', '), // Store as comma-separated string in DB
     company: body.company,
     role: body.role,
@@ -57,9 +64,9 @@ export async function POST(req: Request) {
   });
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-  const shareUrl = `${baseUrl}/a/${audit.slug}`;
-  const subject = audit.results.totalMonthlySavings > 0
-    ? `Your AI spend audit — $${Math.round(audit.results.totalMonthlySavings).toLocaleString()}/mo of leakage`
+  const shareUrl = `${baseUrl}/a/${body.slug}`;
+  const subject = monthlySavings > 0
+    ? `Your AI spend audit — $${Math.round(monthlySavings).toLocaleString()}/mo of leakage`
     : `Your AI spend audit — you're spending well`;
 
   await sendEmail({
@@ -67,8 +74,8 @@ export async function POST(req: Request) {
     subject,
     html: leadConfirmationHtml({
       shareUrl,
-      monthlySavings: audit.results.totalMonthlySavings,
-      annualSavings: audit.results.totalAnnualSavings,
+      monthlySavings: monthlySavings,
+      annualSavings: annualSavings,
     }),
   });
 
