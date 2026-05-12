@@ -5,7 +5,7 @@ import path from "node:path";
 import { nanoid } from "nanoid";
 import type { AuditInput, AuditResult } from "@/lib/engine";
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+const DATA_DIR = process.env.VERCEL ? "/tmp" : path.join(process.cwd(), ".data");
 const AUDITS_FILE = path.join(DATA_DIR, "audits.json");
 const LEADS_FILE = path.join(DATA_DIR, "leads.json");
 
