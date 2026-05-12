@@ -3,7 +3,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { nanoid } from "nanoid";
-import type { AuditInput, AuditResult } from "@/lib/engine";
+import { runAudit, type AuditInput, type AuditResult } from "@/lib/engine";
 
 const DATA_DIR = process.env.VERCEL ? "/tmp" : path.join(process.cwd(), ".data");
 const AUDITS_FILE = path.join(DATA_DIR, "audits.json");
@@ -58,7 +58,11 @@ export async function createAudit(args: {
   summary?: AuditRecord["summary"];
 }): Promise<AuditRecord> {
   const all = await readJson<AuditRecord[]>(AUDITS_FILE, []);
-  const slug = nanoid(10);
+  
+  // Encode state into the slug for Vercel stateless fallback
+  const payload = JSON.stringify({ i: args.inputs, s: args.summary });
+  const slug = Buffer.from(payload).toString("base64url");
+  
   const record: AuditRecord = {
     id: nanoid(16),
     slug,
@@ -74,7 +78,30 @@ export async function createAudit(args: {
 
 export async function getAuditBySlug(slug: string): Promise<AuditRecord | null> {
   const all = await readJson<AuditRecord[]>(AUDITS_FILE, []);
-  return all.find((a) => a.slug === slug) ?? null;
+  let found = all.find((a) => a.slug === slug);
+
+  if (!found) {
+    try {
+      // Vercel serverless fallback: decode state from the slug itself
+      const decoded = Buffer.from(slug, "base64url").toString("utf8");
+      const payload = JSON.parse(decoded);
+      if (payload && payload.i) {
+        const results = runAudit(payload.i);
+        found = {
+          id: `fallback-${slug.substring(0, 8)}`,
+          slug,
+          inputs: payload.i,
+          results,
+          summary: payload.s,
+          createdAt: new Date().toISOString(),
+        };
+      }
+    } catch {
+      // Ignore parsing errors
+    }
+  }
+
+  return found ?? null;
 }
 
 export async function updateAuditSummary(slug: string, summary: NonNullable<AuditRecord["summary"]>): Promise<void> {
