@@ -3,11 +3,14 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { nanoid } from "nanoid";
-import { runAudit, type AuditInput, type AuditResult } from "@/lib/engine";
+import { type AuditInput, type AuditResult } from "@/lib/engine";
+import { Redis } from "@upstash/redis";
 
 const DATA_DIR = process.env.VERCEL ? "/tmp" : path.join(process.cwd(), ".data");
 const AUDITS_FILE = path.join(DATA_DIR, "audits.json");
 const LEADS_FILE = path.join(DATA_DIR, "leads.json");
+
+const redis = process.env.UPSTASH_REDIS_REST_URL ? Redis.fromEnv() : null;
 
 export interface AuditRecord {
   id: string;
@@ -57,12 +60,7 @@ export async function createAudit(args: {
   results: AuditResult;
   summary?: AuditRecord["summary"];
 }): Promise<AuditRecord> {
-  const all = await readJson<AuditRecord[]>(AUDITS_FILE, []);
-  
-  // Encode state into the slug for Vercel stateless fallback
-  const payload = JSON.stringify({ i: args.inputs, s: args.summary });
-  const slug = Buffer.from(payload).toString("base64url");
-  
+  const slug = nanoid(10);
   const record: AuditRecord = {
     id: nanoid(16),
     slug,
@@ -71,40 +69,38 @@ export async function createAudit(args: {
     summary: args.summary,
     createdAt: new Date().toISOString(),
   };
-  all.push(record);
-  await writeJson(AUDITS_FILE, all);
+
+  if (redis) {
+    await redis.set(`audit:${slug}`, record);
+  } else {
+    const all = await readJson<AuditRecord[]>(AUDITS_FILE, []);
+    all.push(record);
+    await writeJson(AUDITS_FILE, all);
+  }
+  
   return record;
 }
 
 export async function getAuditBySlug(slug: string): Promise<AuditRecord | null> {
-  const all = await readJson<AuditRecord[]>(AUDITS_FILE, []);
-  let found = all.find((a) => a.slug === slug);
-
-  if (!found) {
-    try {
-      // Vercel serverless fallback: decode state from the slug itself
-      const decoded = Buffer.from(slug, "base64url").toString("utf8");
-      const payload = JSON.parse(decoded);
-      if (payload && payload.i) {
-        const results = runAudit(payload.i);
-        found = {
-          id: `fallback-${slug.substring(0, 8)}`,
-          slug,
-          inputs: payload.i,
-          results,
-          summary: payload.s,
-          createdAt: new Date().toISOString(),
-        };
-      }
-    } catch {
-      // Ignore parsing errors
-    }
+  if (redis) {
+    const record = await redis.get<AuditRecord>(`audit:${slug}`);
+    return record ?? null;
   }
 
-  return found ?? null;
+  const all = await readJson<AuditRecord[]>(AUDITS_FILE, []);
+  return all.find((a) => a.slug === slug) ?? null;
 }
 
 export async function updateAuditSummary(slug: string, summary: NonNullable<AuditRecord["summary"]>): Promise<void> {
+  if (redis) {
+    const target = await redis.get<AuditRecord>(`audit:${slug}`);
+    if (target) {
+      target.summary = summary;
+      await redis.set(`audit:${slug}`, target);
+    }
+    return;
+  }
+
   const all = await readJson<AuditRecord[]>(AUDITS_FILE, []);
   const target = all.find((a) => a.slug === slug);
   if (!target) return;
@@ -119,7 +115,6 @@ export async function createLead(args: {
   role?: string;
   teamSize?: number;
 }): Promise<LeadRecord> {
-  const all = await readJson<LeadRecord[]>(LEADS_FILE, []);
   const record: LeadRecord = {
     id: nanoid(16),
     auditId: args.auditId,
@@ -129,7 +124,15 @@ export async function createLead(args: {
     teamSize: args.teamSize,
     createdAt: new Date().toISOString(),
   };
-  all.push(record);
-  await writeJson(LEADS_FILE, all);
+
+  if (redis) {
+    await redis.set(`lead:${record.id}`, record);
+    await redis.lpush("leads", record.id);
+  } else {
+    const all = await readJson<LeadRecord[]>(LEADS_FILE, []);
+    all.push(record);
+    await writeJson(LEADS_FILE, all);
+  }
+  
   return record;
 }
