@@ -111,7 +111,7 @@ export default function ResultsCta({ result, slug, defaultEmail }: Props) {
             </button>
           </form>
         ) : (
-          <p className="mt-3 text-sm text-accent">Sent. Check your inbox — we'll follow up to schedule.</p>
+          <p className="mt-3 text-sm text-accent">Sent. Check your inbox (and spam folder) — we'll follow up to schedule.</p>
         )}
         {error && <p className="mt-2 text-sm text-red-700">{error}</p>}
       </section>
@@ -141,7 +141,7 @@ export default function ResultsCta({ result, slug, defaultEmail }: Props) {
           </button>
         </form>
       ) : (
-        <p className="mt-3 text-sm text-accent">Sent. Check your inbox.</p>
+        <p className="mt-3 text-sm text-accent">Sent. Check your inbox (and spam folder).</p>
       )}
       {error && <p className="mt-2 text-sm text-red-700">{error}</p>}
     </section>

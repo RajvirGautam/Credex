@@ -520,29 +520,7 @@ export default function ToolForm() {
         </div>
       </div>
 
-      {/* ── 03 Get a copy ── */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2.5">
-          <SectionLabel n="03">Get a copy</SectionLabel>
-          <span className="text-sm text-ink-400">(optional)</span>
-        </div>
-        <div className="card">
-          <label className="label" htmlFor="email">
-            Email me a copy
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={state.email}
-            onChange={(e) => setState((s) => ({ ...s, email: e.target.value }))}
-            placeholder="you@startup.com"
-            className="input mt-2"
-          />
-          <p className="mt-2 text-xs text-ink-400">
-            Results render immediately either way. One email, no follow-ups.
-          </p>
-        </div>
-      </div>
+
 
       {/* Error */}
       {error && (
