@@ -4,8 +4,8 @@ A free web app that audits a startup's AI tool spend across 8 vendors (Cursor, C
 
 Built for the **Credex Round 1** assignment.
 
-> **Live URL:** _add after Vercel deploy_
-> **Repo:** _add after `git remote add origin …`_
+> **Live URL:** https://credex-eta.vercel.app
+> **Repo:** https://github.com/RajvirGautam/Credex
 
 ## What it does
 
@@ -55,7 +55,11 @@ Run with `npm test`. CI runs lint + typecheck + tests on every push.
 
 ## Screenshots
 
-_Add 3+ screenshots or a 30s Loom here before submission._
+<img width="1470" height="770" alt="image" src="https://github.com/user-attachments/assets/40460567-7ba0-4d1b-84a8-51251b2cb154" />
+<img width="1470" height="769" alt="image" src="https://github.com/user-attachments/assets/f58589ac-2f3d-4188-9f85-a94061efa9f7" />
+<img width="1470" height="768" alt="image" src="https://github.com/user-attachments/assets/277084c1-9cb1-4969-8281-e75d0caaeb75" />
+<img width="1207" height="646" alt="image" src="https://github.com/user-attachments/assets/8320ee2a-712b-4bb8-9009-f369769574ba" />
+
 
 - Landing page (hero, FAQ, sample finding card)
 - Audit form mid-fill (multiple tools enabled, total spend running tally)
